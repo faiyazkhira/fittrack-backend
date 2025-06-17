@@ -1,5 +1,6 @@
 package com.faiyaz.project.fittrack.user.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -31,6 +32,7 @@ public class User implements UserDetails {
     @Column(nullable = false, unique = true)
     private String email;
     @Column(nullable = false)
+    @JsonIgnore
     private String password;
     private int age;
     private Double height; //in cm
