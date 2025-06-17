@@ -2,6 +2,7 @@ package com.faiyaz.project.fittrack.workout.controller;
 
 import com.faiyaz.project.fittrack.user.entity.User;
 import com.faiyaz.project.fittrack.workout.dto.WorkoutRequestDto;
+import com.faiyaz.project.fittrack.workout.dto.WorkoutResponseDto;
 import com.faiyaz.project.fittrack.workout.entity.Workout;
 import com.faiyaz.project.fittrack.workout.service.WorkoutService;
 import org.springframework.http.ResponseEntity;
@@ -22,9 +23,19 @@ public class WorkoutController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createWorkout(@RequestBody WorkoutRequestDto request, @AuthenticationPrincipal User user){
+    public ResponseEntity<WorkoutResponseDto> createWorkout(@RequestBody WorkoutRequestDto request, @AuthenticationPrincipal User user){
 
         Workout session = workoutService.createSession(user.getId(), request.getSessionDate());
-        return ResponseEntity.ok(session);
+
+        WorkoutResponseDto response = WorkoutResponseDto.builder()
+                .id(session.getId())
+                .sessionDate(session.getSessionDate())
+                .createdAt(session.getCreatedAt())
+                .updatedAt(session.getUpdatedAt())
+                .userEmail(session.getUser().getEmail())
+                .userId(session.getUser().getId())
+                .build();
+
+        return ResponseEntity.ok(response);
     }
 }
