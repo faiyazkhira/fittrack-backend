@@ -5,6 +5,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
@@ -31,6 +32,10 @@ public class User implements UserDetails {
     private String email;
     @Column(nullable = false)
     private String password;
+    private int age;
+    private Double height; //in cm
+    private Double weight; //in kg
+    private String gender;
 
     @Enumerated(EnumType.STRING)
     private Role role = Role.USER;
@@ -47,7 +52,7 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
+        return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
     }
 
     @Override
@@ -69,4 +74,10 @@ public class User implements UserDetails {
     public boolean isCredentialsNonExpired() {
         return UserDetails.super.isCredentialsNonExpired();
     }
+
+    @Override
+    public boolean isEnabled() {
+        return enabled;
+    }
 }
+
