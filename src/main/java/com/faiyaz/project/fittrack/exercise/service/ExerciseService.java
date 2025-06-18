@@ -2,16 +2,22 @@ package com.faiyaz.project.fittrack.exercise.service;
 
 import com.faiyaz.project.fittrack.exercise.dto.ExerciseRequestDto;
 import com.faiyaz.project.fittrack.exercise.dto.ExerciseResponseDto;
+import com.faiyaz.project.fittrack.exercise.dto.ExerciseUpdateRequestDto;
 import com.faiyaz.project.fittrack.exercise.entity.Exercise;
 import com.faiyaz.project.fittrack.exercise.repository.ExerciseRepository;
 import com.faiyaz.project.fittrack.user.repository.UserRepository;
 import com.faiyaz.project.fittrack.workout.entity.Workout;
 import com.faiyaz.project.fittrack.workout.repository.WorkoutRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.nio.file.AccessDeniedException;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class ExerciseService {
 
@@ -51,5 +57,50 @@ public class ExerciseService {
                         .workoutId(ex.getWorkout().getId())
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    public ExerciseResponseDto updateExercise(UUID id, UUID userId, ExerciseUpdateRequestDto request) throws AccessDeniedException {
+        log.info("User {} attempting to update exercise {}", userId, id);
+
+        Exercise existingExercise = exerciseRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Exercise not found"));
+
+        if(!existingExercise.getWorkout().getUser().getId().equals(userId)){
+            log.warn("Access denied: User {} tried to update exercise {}", userId, id);
+            throw new AccessDeniedException("You do not have permission to update this exercise");
+        }
+
+        if(request.getName() != null) existingExercise.setName(request.getName());
+        if(request.getSets() != null) existingExercise.setSets(request.getSets());
+        if(request.getReps() != null) existingExercise.setReps(request.getReps());
+        if(request.getWeight() != null) existingExercise.setWeight(request.getWeight());
+        if(request.getMuscleGroup() != null) existingExercise.setMuscleGroup(request.getMuscleGroup());
+
+        Exercise saved = exerciseRepository.save(existingExercise);
+
+        return ExerciseResponseDto.builder()
+                .id(saved.getId())
+                .name(saved.getName())
+                .sets(saved.getSets())
+                .reps(saved.getReps())
+                .weight(saved.getWeight())
+                .muscleGroup(saved.getMuscleGroup())
+                .workoutId(saved.getWorkout().getId())
+                .build();
+
+    }
+
+    public void deleteExercise(UUID id, UUID userId) throws AccessDeniedException {
+        log.info("User {} attempting to delete exercise {}", userId, id);
+
+        Exercise existingExercise = exerciseRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Exercise not found"));
+
+        if(!existingExercise.getWorkout().getUser().getId().equals(userId)){
+            log.warn("Access denied: User {} tried to delete exercise {}", userId, id);
+            throw new AccessDeniedException("You do not have permission to delete this exercise");
+        }
+
+        exerciseRepository.delete(existingExercise);
     }
 }
