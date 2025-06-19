@@ -14,4 +14,6 @@ public interface ExerciseRepository extends JpaRepository<Exercise, UUID> {
     List<Exercise> findByWorkout_User_IdAndNameOrderByWorkout_SessionDateAsc(UUID userId, String name);
     @Transactional
     void deleteByWorkoutId(UUID workoutId);
+
+    List<Exercise> findByWorkoutId(UUID workoutId);
 }

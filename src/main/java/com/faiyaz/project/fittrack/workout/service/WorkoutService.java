@@ -1,17 +1,23 @@
 package com.faiyaz.project.fittrack.workout.service;
 
+import com.faiyaz.project.fittrack.exercise.dto.ExerciseResponseDto;
+import com.faiyaz.project.fittrack.exercise.entity.Exercise;
+import com.faiyaz.project.fittrack.exercise.entity.MuscleGroup;
 import com.faiyaz.project.fittrack.exercise.repository.ExerciseRepository;
 import com.faiyaz.project.fittrack.user.entity.User;
 import com.faiyaz.project.fittrack.user.repository.UserRepository;
 import com.faiyaz.project.fittrack.workout.dto.WorkoutRequestDto;
 import com.faiyaz.project.fittrack.workout.dto.WorkoutResponseDto;
+import com.faiyaz.project.fittrack.workout.dto.WorkoutWithExercisesResponseDto;
 import com.faiyaz.project.fittrack.workout.entity.Workout;
 import com.faiyaz.project.fittrack.workout.repository.WorkoutRepository;
+import org.springframework.data.domain.*;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
@@ -79,5 +85,42 @@ public class WorkoutService {
 
         exerciseRepository.deleteByWorkoutId(id);
         workoutRepository.delete(workout);
+    }
+
+    public Page<WorkoutWithExercisesResponseDto> getFilteredWorkouts(UUID userId, int page, int size, LocalDate startDate, LocalDate endDate, MuscleGroup muscleGroup) {
+        //Create the pageable object
+        Pageable pageable = PageRequest.of(page, size, Sort.by("sessionDate").descending());
+
+        //Fetch the workouts by userId and optional dates
+        List<Workout> workouts = workoutRepository.findByUserIdAndSessionDateBetween(
+                userId,
+                startDate != null ? startDate : LocalDate.of(1970, 1, 1),
+                endDate != null ? endDate : LocalDate.now()
+        );
+
+        //Filter the exercises
+        List<WorkoutWithExercisesResponseDto> response = workouts.stream().map(workout -> {
+            List<Exercise> exercises = exerciseRepository.findByWorkoutId(workout.getId());
+
+            if(muscleGroup != null){
+                exercises = exercises.stream()
+                        .filter(e -> e.getMuscleGroup() == muscleGroup)
+                        .toList();
+            }
+
+            return new WorkoutWithExercisesResponseDto(
+                    workout.getSessionDate(),
+                    exercises.stream()
+                            .map(e -> new ExerciseResponseDto(
+                                    e.getId(), e.getName(), e.getSets(), e.getReps(), e.getWeight(), e.getMuscleGroup(), e.getWorkout().getId()
+                            )).toList()
+            );
+        }).filter(w -> !w.getExercises().isEmpty()).toList();
+
+        int start = Math.min((int) pageable.getOffset(), response.size());
+        int end = Math.min(start + (int) pageable.getPageSize(), response.size());
+        List<WorkoutWithExercisesResponseDto> paginatedList = response.subList(start, end);
+
+        return new PageImpl<>(paginatedList, pageable, response.size());
     }
 }
