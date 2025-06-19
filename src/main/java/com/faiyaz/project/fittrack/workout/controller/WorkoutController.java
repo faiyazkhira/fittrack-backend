@@ -1,15 +1,21 @@
 package com.faiyaz.project.fittrack.workout.controller;
 
+import com.faiyaz.project.fittrack.exercise.entity.MuscleGroup;
 import com.faiyaz.project.fittrack.user.entity.User;
 import com.faiyaz.project.fittrack.workout.dto.WorkoutRequestDto;
 import com.faiyaz.project.fittrack.workout.dto.WorkoutResponseDto;
+import com.faiyaz.project.fittrack.workout.dto.WorkoutWithExercisesResponseDto;
 import com.faiyaz.project.fittrack.workout.entity.Workout;
 import com.faiyaz.project.fittrack.workout.service.WorkoutService;
+import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.nio.file.AccessDeniedException;
+import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -52,5 +58,19 @@ public class WorkoutController {
                                            @AuthenticationPrincipal User user) throws AccessDeniedException {
         workoutService.deleteWorkout(id, user.getId());
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping
+    public ResponseEntity<?> getFilteredWorkouts(
+            @AuthenticationPrincipal User user,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false)MuscleGroup muscleGroup
+            ) {
+
+        Page<WorkoutWithExercisesResponseDto> response = workoutService.getFilteredWorkouts(user.getId(), page, size, startDate, endDate, muscleGroup);
+        return ResponseEntity.ok(response);
     }
 }
