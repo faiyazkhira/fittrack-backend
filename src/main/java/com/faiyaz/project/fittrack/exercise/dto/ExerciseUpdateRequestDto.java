@@ -6,14 +6,16 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.UUID;
+
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class ExerciseUpdateRequestDto {
-    private String name;
+    private UUID catalogId;
+    private UUID customId;
     private Integer sets;
     private Integer reps;
     private Double weight;
-    private MuscleGroup muscleGroup;
 }

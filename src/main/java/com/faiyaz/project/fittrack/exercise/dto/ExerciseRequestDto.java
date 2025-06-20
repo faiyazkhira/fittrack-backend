@@ -23,10 +23,10 @@ public class ExerciseRequestDto {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class ExerciseInput {
-        private String name;
+        private UUID catalogId;
+        private UUID customId;
         private int sets;
         private int reps;
         private double weight;
-        private MuscleGroup muscleGroup;
     }
 }

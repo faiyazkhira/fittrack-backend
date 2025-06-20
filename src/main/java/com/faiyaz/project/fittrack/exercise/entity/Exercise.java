@@ -26,8 +26,16 @@ public class Exercise {
     @JoinColumn(name = "workout_id", nullable = false)
     private Workout workout;
 
-    @Column(nullable = false)
-    private String name;
+//    @Column(nullable = false)
+//    private String name;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "catalog_id")
+    private ExerciseCatalog exerciseCatalog;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "custom_id")
+    private CustomExercise customExercise;
 
     @Column(nullable = false)
     private int sets;
@@ -38,9 +46,9 @@ public class Exercise {
     @Column(nullable = false)
     private double weight;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private MuscleGroup muscleGroup;
+//    @Enumerated(EnumType.STRING)
+//    @Column(nullable = false)
+//    private MuscleGroup muscleGroup;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
