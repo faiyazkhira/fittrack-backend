@@ -1,5 +1,6 @@
 package com.faiyaz.project.fittrack.exercise.service;
 
+import com.faiyaz.project.fittrack.exercise.dto.ExerciseProgressResponseDto;
 import com.faiyaz.project.fittrack.exercise.dto.ExerciseRequestDto;
 import com.faiyaz.project.fittrack.exercise.dto.ExerciseResponseDto;
 import com.faiyaz.project.fittrack.exercise.dto.ExerciseUpdateRequestDto;
@@ -12,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.AccessDeniedException;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
@@ -102,5 +104,26 @@ public class ExerciseService {
         }
 
         exerciseRepository.delete(existingExercise);
+    }
+
+    public List<ExerciseProgressResponseDto> getExerciseProgress(UUID userId, String name, LocalDate startDate, LocalDate endDate) {
+        List<Exercise> exercises = exerciseRepository.findByWorkout_User_IdAndNameAndWorkout_SessionDateBetweenOrderByWorkout_SessionDateAsc(
+                userId,
+                name,
+                startDate != null ? startDate : LocalDate.of(1970, 1, 1),
+                endDate != null ? endDate : LocalDate.now()
+        );
+
+        List<ExerciseProgressResponseDto> response = exercises.stream().map(e -> ExerciseProgressResponseDto.builder()
+                .date(e.getWorkout().getSessionDate())
+                .name(e.getName())
+                .sets(e.getSets())
+                .reps(e.getReps())
+                .weight(e.getWeight())
+                .volume(e.getSets()*e.getReps()*e.getWeight())
+                .build())
+                .toList();
+
+        return response;
     }
 }
