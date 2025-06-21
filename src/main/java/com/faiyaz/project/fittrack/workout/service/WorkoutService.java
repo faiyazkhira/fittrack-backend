@@ -104,16 +104,33 @@ public class WorkoutService {
 
             if(muscleGroup != null){
                 exercises = exercises.stream()
-                        .filter(e -> e.getMuscleGroup() == muscleGroup)
+                        .filter(e -> {
+                            MuscleGroup muscle = e.getExerciseCatalog() != null
+                                    ? e.getExerciseCatalog().getMuscleGroup()
+                                    : e.getCustomExercise() != null
+                                        ? e.getCustomExercise().getMuscleGroup()
+                                        : null;
+
+                            return muscle == muscleGroup;
+                        })
                         .toList();
             }
 
             return new WorkoutWithExercisesResponseDto(
                     workout.getSessionDate(),
                     exercises.stream()
-                            .map(e -> new ExerciseResponseDto(
-                                    e.getId(), e.getName(), e.getSets(), e.getReps(), e.getWeight(), e.getMuscleGroup(), e.getWorkout().getId()
-                            )).toList()
+                            .map(e -> {
+                                String name = e.getExerciseCatalog() != null
+                                        ? e.getExerciseCatalog().getName()
+                                        : e.getCustomExercise().getName();
+
+                                MuscleGroup muscle = e.getExerciseCatalog() != null
+                                        ? e.getExerciseCatalog().getMuscleGroup()
+                                        : e.getCustomExercise().getMuscleGroup();
+                                return new ExerciseResponseDto(
+                                        e.getId(), name, e.getSets(), e.getReps(), e.getWeight(), muscle, e.getWorkout().getId()
+                                );
+                            }).toList()
             );
         }).filter(w -> !w.getExercises().isEmpty()).toList();
 

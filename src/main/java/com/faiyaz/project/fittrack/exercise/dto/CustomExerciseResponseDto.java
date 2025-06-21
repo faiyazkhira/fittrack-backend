@@ -12,10 +12,10 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ExerciseUpdateRequestDto {
-    private UUID catalogId;
-    private UUID customId;
-    private Integer sets;
-    private Integer reps;
-    private Double weight;
+public class CustomExerciseResponseDto {
+
+    private UUID id;
+    private String name;
+    private MuscleGroup muscleGroup;
+
 }
