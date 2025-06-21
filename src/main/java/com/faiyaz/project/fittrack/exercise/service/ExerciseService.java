@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
@@ -168,14 +169,19 @@ public class ExerciseService {
     }
 
     public List<ExerciseProgressResponseDto> getExerciseProgress(UUID userId, String name, LocalDate startDate, LocalDate endDate) {
-        List<Exercise> exercises = exerciseRepository.findByWorkout_User_IdAndNameAndWorkout_SessionDateBetweenOrderByWorkout_SessionDateAsc(
-                userId,
-                name,
-                startDate != null ? startDate : LocalDate.of(1970, 1, 1),
-                endDate != null ? endDate : LocalDate.now()
-        );
+        LocalDate start = startDate != null ? startDate : LocalDate.of(1970, 1, 1);
+        LocalDate end = endDate != null ? endDate : LocalDate.now();
 
-        List<ExerciseProgressResponseDto> response = exercises.stream().map(e -> {
+        List<Exercise> fromCatalog = exerciseRepository.findByWorkout_User_IdAndExerciseCatalog_NameAndWorkout_SessionDateBetweenOrderByWorkout_SessionDateAsc(
+                userId, name, start, end);
+        List<Exercise> fromCustom = exerciseRepository.findByWorkout_User_IdAndCustomExercise_NameAndWorkout_SessionDateBetweenOrderByWorkout_SessionDateAsc(
+                userId, name, start, end);
+
+        List<Exercise> combined = new ArrayList<>();
+        combined.addAll(fromCatalog);
+        combined.addAll(fromCustom);
+
+        List<ExerciseProgressResponseDto> response = combined.stream().map(e -> {
             String exerciseName = e.getExerciseCatalog() != null
                     ? e.getExerciseCatalog().getName()
                     : e.getCustomExercise().getName();

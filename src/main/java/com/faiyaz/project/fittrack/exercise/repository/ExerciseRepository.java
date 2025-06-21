@@ -12,11 +12,22 @@ import java.util.UUID;
 @Repository
 public interface ExerciseRepository extends JpaRepository<Exercise, UUID> {
 
-    List<Exercise> findByWorkout_User_IdAndNameOrderByWorkout_SessionDateAsc(UUID userId, String name);
+    //List<Exercise> findByWorkout_User_IdAndNameOrderByWorkout_SessionDateAsc(UUID userId, String name);
     @Transactional
     void deleteByWorkoutId(UUID workoutId);
 
     List<Exercise> findByWorkoutId(UUID workoutId);
 
-    List<Exercise> findByWorkout_User_IdAndNameAndWorkout_SessionDateBetweenOrderByWorkout_SessionDateAsc(UUID userId, String name, LocalDate startDate, LocalDate endDate);
+    List<Exercise> findByWorkout_User_IdAndExerciseCatalog_NameAndWorkout_SessionDateBetweenOrderByWorkout_SessionDateAsc(
+            UUID userId,
+            String name,
+            LocalDate startDate,
+            LocalDate endDate);
+    List<Exercise> findByWorkout_User_IdAndCustomExercise_NameAndWorkout_SessionDateBetweenOrderByWorkout_SessionDateAsc(
+            UUID userId,
+            String name,
+            LocalDate startDate,
+            LocalDate endDate
+    );
+
 }

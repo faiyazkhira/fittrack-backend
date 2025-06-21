@@ -107,7 +107,9 @@ public class WorkoutService {
                         .filter(e -> {
                             MuscleGroup muscle = e.getExerciseCatalog() != null
                                     ? e.getExerciseCatalog().getMuscleGroup()
-                                    : e.getCustomExercise().getMuscleGroup();
+                                    : e.getCustomExercise() != null
+                                        ? e.getCustomExercise().getMuscleGroup()
+                                        : null;
 
                             return muscle == muscleGroup;
                         })
