@@ -127,8 +127,12 @@ public class WorkoutService {
                                 MuscleGroup muscle = e.getExerciseCatalog() != null
                                         ? e.getExerciseCatalog().getMuscleGroup()
                                         : e.getCustomExercise().getMuscleGroup();
+
+                                List<ExerciseResponseDto.SetResponse> sets = e.getSets().stream()
+                                        .map(s -> new ExerciseResponseDto.SetResponse(s.getId(), s.getReps(), s.getWeight(), s.getNotes(), s.getLoggedAt()))
+                                        .toList();
                                 return new ExerciseResponseDto(
-                                        e.getId(), name, e.getSets(), e.getReps(), e.getWeight(), muscle, e.getWorkout().getId()
+                                        e.getId(), name, sets, muscle, e.getWorkout().getId()
                                 );
                             }).toList()
             );
