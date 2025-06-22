@@ -11,11 +11,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class SignUpRequest {
 
-    @NotBlank
+    @NotBlank(message = "Name cannot be blank")
     private String name;
-    @Email
-    @NotBlank
+    @Email(message = "Invalid email format")
+    @NotBlank(message = "Email cannot be blank")
     private String email;
-    @NotBlank
+    @NotBlank(message = "Password cannot be blank")
     private String password;
 }

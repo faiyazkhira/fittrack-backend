@@ -1,5 +1,9 @@
 package com.faiyaz.project.fittrack.exercise.service;
 
+import com.faiyaz.project.fittrack.exception.AccessDeniedException;
+import com.faiyaz.project.fittrack.exception.ExerciseNotFoundException;
+import com.faiyaz.project.fittrack.exception.InvalidExerciseInputException;
+import com.faiyaz.project.fittrack.exception.WorkoutNotFoundException;
 import com.faiyaz.project.fittrack.exercise.dto.ExerciseProgressResponseDto;
 import com.faiyaz.project.fittrack.exercise.dto.ExerciseRequestDto;
 import com.faiyaz.project.fittrack.exercise.dto.ExerciseResponseDto;
@@ -8,21 +12,15 @@ import com.faiyaz.project.fittrack.exercise.entity.*;
 import com.faiyaz.project.fittrack.exercise.repository.CustomExerciseRepository;
 import com.faiyaz.project.fittrack.exercise.repository.ExerciseCatalogRepository;
 import com.faiyaz.project.fittrack.exercise.repository.ExerciseRepository;
-import com.faiyaz.project.fittrack.exercise.repository.ExerciseSetRepository;
-import com.faiyaz.project.fittrack.user.entity.User;
-import com.faiyaz.project.fittrack.user.repository.UserRepository;
 import com.faiyaz.project.fittrack.workout.entity.Workout;
 import com.faiyaz.project.fittrack.workout.repository.WorkoutRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -35,24 +33,21 @@ public class ExerciseService {
     private final WorkoutRepository workoutRepository;
     private final ExerciseCatalogRepository exerciseCatalogRepository;
     private final CustomExerciseRepository customExerciseRepository;
-    private final ExerciseSetRepository exerciseSetRepository;
 
     public ExerciseService(ExerciseRepository exerciseRepository, WorkoutRepository workoutRepository,
                            ExerciseCatalogRepository exerciseCatalogRepository,
-                           CustomExerciseRepository customExerciseRepository,
-                           ExerciseSetRepository exerciseSetRepository
+                           CustomExerciseRepository customExerciseRepository
                            ) {
         this.exerciseRepository = exerciseRepository;
         this.workoutRepository = workoutRepository;
         this.exerciseCatalogRepository = exerciseCatalogRepository;
         this.customExerciseRepository = customExerciseRepository;
-        this.exerciseSetRepository = exerciseSetRepository;
     }
 
     @Transactional
-    public List<ExerciseResponseDto> addExerciseToWorkout(ExerciseRequestDto request, UUID userId) throws AccessDeniedException {
+    public List<ExerciseResponseDto> addExerciseToWorkout(ExerciseRequestDto request, UUID userId) {
         Workout workout = workoutRepository.findById(request.getWorkoutId())
-                .orElseThrow(() -> new IllegalArgumentException("Workout not found"));
+                .orElseThrow(() -> new WorkoutNotFoundException("Workout not found for id: " + request.getWorkoutId()));
 
         if(!workout.getUser().getId().equals(userId)){
             throw new AccessDeniedException("You do not have permission to add exercises to this workout");
@@ -64,17 +59,17 @@ public class ExerciseService {
                     CustomExercise custom = null;
 
                     if(ex.getCustomId() != null && ex.getCatalogId() != null){
-                        throw new IllegalArgumentException("Only one of catalogId or customId must be provided.");
+                        throw new InvalidExerciseInputException("Only one of catalogId or customId must be provided.");
                     }
 
                     if(ex.getCatalogId() != null){
                         catalog = exerciseCatalogRepository.findById(ex.getCatalogId())
-                                .orElseThrow(() -> new NoSuchElementException("Catalog exercise not found"));
+                                .orElseThrow(() -> new ExerciseNotFoundException("Catalog exercise not found for id: " + ex.getCatalogId()));
                     } else if(ex.getCustomId() != null){
                         custom = customExerciseRepository.findById(ex.getCustomId())
-                                .orElseThrow(()-> new NoSuchElementException("Custom exercise not found"));
+                                .orElseThrow(()-> new ExerciseNotFoundException("Custom exercise not found for id: " + ex.getCustomId()));
                     } else {
-                        throw new IllegalArgumentException("Either catalogId or customId must be provided.");
+                        throw new InvalidExerciseInputException("Either catalogId or customId must be provided.");
                     }
 
                    Exercise e = Exercise.builder()
@@ -120,11 +115,11 @@ public class ExerciseService {
                 }).collect(Collectors.toList());
     }
 
-    public ExerciseResponseDto updateExercise(UUID id, UUID userId, ExerciseUpdateRequestDto request) throws AccessDeniedException {
+    public ExerciseResponseDto updateExercise(UUID id, UUID userId, ExerciseUpdateRequestDto request) {
         log.info("User {} attempting to update exercise {}", userId, id);
 
         Exercise existingExercise = exerciseRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Exercise not found"));
+                .orElseThrow(() -> new ExerciseNotFoundException("Exercise not found for id: " + id));
 
         if(!existingExercise.getWorkout().getUser().getId().equals(userId)){
             log.warn("Access denied: User {} tried to update exercise {}", userId, id);
@@ -132,17 +127,17 @@ public class ExerciseService {
         }
 
         if(request.getCatalogId() != null && request.getCustomId() != null){
-            throw new IllegalArgumentException("Only one of catalogId or customId must be provided.");
+            throw new InvalidExerciseInputException("Only one of catalogId or customId must be provided.");
         }
 
         if(request.getCatalogId() != null){
             ExerciseCatalog catalog = exerciseCatalogRepository.findById(request.getCatalogId())
-                    .orElseThrow(() -> new NoSuchElementException("Catalog exercise not found"));
+                    .orElseThrow(() -> new ExerciseNotFoundException("Catalog exercise not found for id: " + request.getCatalogId()));
             existingExercise.setExerciseCatalog(catalog);
             existingExercise.setCustomExercise(null);
         } else if(request.getCustomId() != null){
             CustomExercise custom = customExerciseRepository.findById(request.getCustomId())
-                    .orElseThrow(() -> new NoSuchElementException("Custom exercise not found"));
+                    .orElseThrow(() -> new ExerciseNotFoundException("Custom exercise not found for id: " + request.getCustomId()));
             existingExercise.setCustomExercise(custom);
             existingExercise.setExerciseCatalog(null);
         }
@@ -173,7 +168,7 @@ public class ExerciseService {
         log.info("User {} attempting to delete exercise {}", userId, id);
 
         Exercise existingExercise = exerciseRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Exercise not found"));
+                .orElseThrow(() -> new ExerciseNotFoundException("Exercise not found for id: " + id));
 
         if(!existingExercise.getWorkout().getUser().getId().equals(userId)){
             log.warn("Access denied: User {} tried to delete exercise {}", userId, id);
@@ -195,7 +190,7 @@ public class ExerciseService {
         List<Exercise> combined = Stream.concat(fromCatalog.stream(), fromCustom.stream())
                 .toList();
 
-        List<ExerciseProgressResponseDto> response = combined.stream().map(e -> {
+       return combined.stream().map(e -> {
             String exerciseName = e.getExerciseCatalog() != null
                     ? e.getExerciseCatalog().getName()
                     : e.getCustomExercise().getName();
@@ -212,7 +207,5 @@ public class ExerciseService {
                             .volume(totalVolume)
                             .build();
                 }).toList();
-
-        return response;
     }
 }
