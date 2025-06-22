@@ -1,5 +1,6 @@
 package com.faiyaz.project.fittrack.exercise.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -21,6 +22,7 @@ public class ExerciseSet {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "exercise_id", nullable = false)
+    @JsonBackReference
     private Exercise exercise;
 
     @Column(nullable = false)

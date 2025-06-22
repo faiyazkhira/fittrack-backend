@@ -25,8 +25,16 @@ public class ExerciseRequestDto {
     public static class ExerciseInput {
         private UUID catalogId;
         private UUID customId;
-        private int sets;
-        private int reps;
-        private double weight;
+        private List<SetInput> sets;
+
+        @Getter
+        @Setter
+        @AllArgsConstructor
+        @NoArgsConstructor
+        public static class SetInput {
+            private Integer reps;
+            private Double weight;
+            private String notes;
+        }
     }
 }

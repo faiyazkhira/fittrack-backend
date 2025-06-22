@@ -4,26 +4,28 @@ import com.faiyaz.project.fittrack.exercise.dto.ExerciseProgressResponseDto;
 import com.faiyaz.project.fittrack.exercise.dto.ExerciseRequestDto;
 import com.faiyaz.project.fittrack.exercise.dto.ExerciseResponseDto;
 import com.faiyaz.project.fittrack.exercise.dto.ExerciseUpdateRequestDto;
-import com.faiyaz.project.fittrack.exercise.entity.CustomExercise;
-import com.faiyaz.project.fittrack.exercise.entity.Exercise;
-import com.faiyaz.project.fittrack.exercise.entity.ExerciseCatalog;
-import com.faiyaz.project.fittrack.exercise.entity.MuscleGroup;
+import com.faiyaz.project.fittrack.exercise.entity.*;
 import com.faiyaz.project.fittrack.exercise.repository.CustomExerciseRepository;
 import com.faiyaz.project.fittrack.exercise.repository.ExerciseCatalogRepository;
 import com.faiyaz.project.fittrack.exercise.repository.ExerciseRepository;
+import com.faiyaz.project.fittrack.exercise.repository.ExerciseSetRepository;
+import com.faiyaz.project.fittrack.user.entity.User;
 import com.faiyaz.project.fittrack.user.repository.UserRepository;
 import com.faiyaz.project.fittrack.workout.entity.Workout;
 import com.faiyaz.project.fittrack.workout.repository.WorkoutRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 @Service
@@ -33,20 +35,28 @@ public class ExerciseService {
     private final WorkoutRepository workoutRepository;
     private final ExerciseCatalogRepository exerciseCatalogRepository;
     private final CustomExerciseRepository customExerciseRepository;
+    private final ExerciseSetRepository exerciseSetRepository;
 
     public ExerciseService(ExerciseRepository exerciseRepository, WorkoutRepository workoutRepository,
                            ExerciseCatalogRepository exerciseCatalogRepository,
-                           CustomExerciseRepository customExerciseRepository
+                           CustomExerciseRepository customExerciseRepository,
+                           ExerciseSetRepository exerciseSetRepository
                            ) {
         this.exerciseRepository = exerciseRepository;
         this.workoutRepository = workoutRepository;
         this.exerciseCatalogRepository = exerciseCatalogRepository;
         this.customExerciseRepository = customExerciseRepository;
+        this.exerciseSetRepository = exerciseSetRepository;
     }
 
-    public List<ExerciseResponseDto> addExerciseToWorkout(ExerciseRequestDto request){
+    @Transactional
+    public List<ExerciseResponseDto> addExerciseToWorkout(ExerciseRequestDto request, UUID userId) throws AccessDeniedException {
         Workout workout = workoutRepository.findById(request.getWorkoutId())
                 .orElseThrow(() -> new IllegalArgumentException("Workout not found"));
+
+        if(!workout.getUser().getId().equals(userId)){
+            throw new AccessDeniedException("You do not have permission to add exercises to this workout");
+        }
 
         List<Exercise> exercises = request.getExercises().stream()
                 .map(ex -> {
@@ -67,14 +77,26 @@ public class ExerciseService {
                         throw new IllegalArgumentException("Either catalogId or customId must be provided.");
                     }
 
-                   return Exercise.builder()
+                   Exercise e = Exercise.builder()
                             .workout(workout)
                             .exerciseCatalog(catalog)
                             .customExercise(custom)
-                            .sets(ex.getSets())
-                            .reps(ex.getReps())
-                            .weight(ex.getWeight())
                             .build();
+
+                    List<ExerciseSet> sets = ex.getSets().stream()
+                            .map(s -> ExerciseSet.builder()
+                                    .reps(s.getReps())
+                                    .weight(s.getWeight())
+                                    .notes(s.getNotes())
+                                    .loggedAt(LocalDateTime.now())
+                                    .exercise(e)
+                                    .build())
+                            .toList();
+
+                    //exerciseSetRepository.saveAll(sets); We already have cascade.ALL in Exercise Entity
+
+                    e.setSets(sets);
+                    return e;
                 }).collect(Collectors.toList());
 
         List<Exercise> saved = exerciseRepository.saveAll(exercises);
@@ -88,9 +110,8 @@ public class ExerciseService {
                     return ExerciseResponseDto.builder()
                             .id(ex.getId())
                             .name(name)
-                            .sets(ex.getSets())
-                            .reps(ex.getReps())
-                            .weight(ex.getWeight())
+                            .sets(ex.getSets().stream()
+                                    .map(s -> new ExerciseResponseDto.SetResponse(s.getId(), s.getReps(), s.getWeight(), s.getNotes(), s.getLoggedAt())).toList())
                             .muscleGroup(ex.getExerciseCatalog() != null
                                     ? ex.getExerciseCatalog().getMuscleGroup()
                                     : ex.getCustomExercise().getMuscleGroup())
@@ -126,12 +147,6 @@ public class ExerciseService {
             existingExercise.setExerciseCatalog(null);
         }
 
-
-        if(request.getSets() != null) existingExercise.setSets(request.getSets());
-        if(request.getReps() != null) existingExercise.setReps(request.getReps());
-        if(request.getWeight() != null) existingExercise.setWeight(request.getWeight());
-
-
         Exercise saved = exerciseRepository.save(existingExercise);
 
         String name = saved.getExerciseCatalog() != null
@@ -145,9 +160,9 @@ public class ExerciseService {
         return ExerciseResponseDto.builder()
                 .id(saved.getId())
                 .name(name)
-                .sets(saved.getSets())
-                .reps(saved.getReps())
-                .weight(saved.getWeight())
+                .sets(saved.getSets().stream()
+                        .map(s -> new ExerciseResponseDto.SetResponse(s.getId(), s.getReps(), s.getWeight(), s.getNotes(), s.getLoggedAt()))
+                        .toList())
                 .muscleGroup(muscleGroup)
                 .workoutId(saved.getWorkout().getId())
                 .build();
@@ -177,22 +192,24 @@ public class ExerciseService {
         List<Exercise> fromCustom = exerciseRepository.findByWorkout_User_IdAndCustomExercise_NameAndWorkout_SessionDateBetweenOrderByWorkout_SessionDateAsc(
                 userId, name, start, end);
 
-        List<Exercise> combined = new ArrayList<>();
-        combined.addAll(fromCatalog);
-        combined.addAll(fromCustom);
+        List<Exercise> combined = Stream.concat(fromCatalog.stream(), fromCustom.stream())
+                .toList();
 
         List<ExerciseProgressResponseDto> response = combined.stream().map(e -> {
             String exerciseName = e.getExerciseCatalog() != null
                     ? e.getExerciseCatalog().getName()
                     : e.getCustomExercise().getName();
 
+            double totalVolume = e.getSets().stream()
+                    .mapToDouble(s-> s.getReps() * s.getWeight()).sum();
+
                    return ExerciseProgressResponseDto.builder()
                             .date(e.getWorkout().getSessionDate())
                             .name(exerciseName)
-                            .sets(e.getSets())
-                            .reps(e.getReps())
-                            .weight(e.getWeight())
-                            .volume(e.getSets() * e.getReps() * e.getWeight())
+                            .sets(e.getSets().stream()
+                                    .map(s -> new ExerciseResponseDto.SetResponse(s.getId(), s.getReps(), s.getWeight(), s.getNotes(), s.getLoggedAt()))
+                                    .toList())
+                            .volume(totalVolume)
                             .build();
                 }).toList();
 

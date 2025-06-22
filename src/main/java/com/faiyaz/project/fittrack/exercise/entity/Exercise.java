@@ -1,6 +1,7 @@
 package com.faiyaz.project.fittrack.exercise.entity;
 
 import com.faiyaz.project.fittrack.workout.entity.Workout;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -29,6 +30,7 @@ public class Exercise {
     private Workout workout;
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<ExerciseSet> sets = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -38,19 +40,6 @@ public class Exercise {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "custom_id")
     private CustomExercise customExercise;
-
-    @Column(nullable = false)
-    private int sets;
-
-    @Column(nullable = false)
-    private int reps;
-
-    @Column(nullable = false)
-    private double weight;
-
-//    @Enumerated(EnumType.STRING)
-//    @Column(nullable = false)
-//    private MuscleGroup muscleGroup;
 
     @CreationTimestamp
     private LocalDateTime createdAt;

@@ -3,6 +3,7 @@ package com.faiyaz.project.fittrack.exercise.dto;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 @Setter
@@ -12,8 +13,6 @@ import java.time.LocalDate;
 public class ExerciseProgressResponseDto {
     private LocalDate date;
     private String name;
-    private int sets;
-    private int reps;
-    private double weight;
+    private List<ExerciseResponseDto.SetResponse> sets;
     private double volume;
 }
