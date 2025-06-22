@@ -1,12 +1,14 @@
 package com.faiyaz.project.fittrack.workout.service;
 
+import com.faiyaz.project.fittrack.exception.AccessDeniedException;
+import com.faiyaz.project.fittrack.exception.InvalidWorkoutInputException;
+import com.faiyaz.project.fittrack.exception.WorkoutNotFoundException;
 import com.faiyaz.project.fittrack.exercise.dto.ExerciseResponseDto;
 import com.faiyaz.project.fittrack.exercise.entity.Exercise;
 import com.faiyaz.project.fittrack.exercise.entity.MuscleGroup;
 import com.faiyaz.project.fittrack.exercise.repository.ExerciseRepository;
 import com.faiyaz.project.fittrack.user.entity.User;
 import com.faiyaz.project.fittrack.user.repository.UserRepository;
-import com.faiyaz.project.fittrack.workout.dto.WorkoutRequestDto;
 import com.faiyaz.project.fittrack.workout.dto.WorkoutResponseDto;
 import com.faiyaz.project.fittrack.workout.dto.WorkoutWithExercisesResponseDto;
 import com.faiyaz.project.fittrack.workout.entity.Workout;
@@ -15,10 +17,8 @@ import org.springframework.data.domain.*;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @Service
@@ -36,7 +36,7 @@ public class WorkoutService {
 
     public Workout createSession(UUID userId, LocalDate sessionDate){
         if(sessionDate.isAfter(LocalDate.now())){
-            throw new IllegalArgumentException("Session date cannot be in future");
+            throw new InvalidWorkoutInputException("Session date cannot be in future");
         }
 
         User user = userRepository.findById(userId)
@@ -50,13 +50,13 @@ public class WorkoutService {
         return workoutRepository.save(session);
     }
 
-    public WorkoutResponseDto updateWorkout(UUID id, UUID userId, LocalDate newDate) throws AccessDeniedException {
+    public WorkoutResponseDto updateWorkout(UUID id, UUID userId, LocalDate newDate) {
         if(newDate.isAfter(LocalDate.now())){
-            throw new IllegalArgumentException("Workout date cannot be in future");
+            throw new InvalidWorkoutInputException("Workout date cannot be in future");
         }
 
         Workout workout = workoutRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Workout not found"));
+                .orElseThrow(() -> new WorkoutNotFoundException("Workout not found for id: " + id));
 
         if(!workout.getUser().getId().equals(userId)){
             throw new AccessDeniedException("You do not have permission to edit this workout");
@@ -77,7 +77,7 @@ public class WorkoutService {
 
     public void deleteWorkout(UUID id, UUID userId) throws AccessDeniedException {
         Workout workout = workoutRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Workout not found"));
+                .orElseThrow(() -> new WorkoutNotFoundException("Workout not found for id: " + id));
 
         if(!workout.getUser().getId().equals(userId)){
             throw new AccessDeniedException("You do not have permission to delete this workout");
@@ -139,7 +139,7 @@ public class WorkoutService {
         }).filter(w -> !w.getExercises().isEmpty()).toList();
 
         int start = Math.min((int) pageable.getOffset(), response.size());
-        int end = Math.min(start + (int) pageable.getPageSize(), response.size());
+        int end = Math.min(start + pageable.getPageSize(), response.size());
         List<WorkoutWithExercisesResponseDto> paginatedList = response.subList(start, end);
 
         return new PageImpl<>(paginatedList, pageable, response.size());

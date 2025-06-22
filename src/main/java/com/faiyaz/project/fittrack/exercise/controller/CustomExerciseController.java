@@ -4,7 +4,7 @@ import com.faiyaz.project.fittrack.exercise.dto.CustomExerciseRequestDto;
 import com.faiyaz.project.fittrack.exercise.dto.CustomExerciseResponseDto;
 import com.faiyaz.project.fittrack.exercise.service.CustomExerciseService;
 import com.faiyaz.project.fittrack.user.entity.User;
-import org.apache.coyote.Response;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +22,7 @@ public class CustomExerciseController {
     }
 
     @PostMapping
-    public ResponseEntity<CustomExerciseResponseDto> create(@RequestBody CustomExerciseRequestDto request,
+    public ResponseEntity<CustomExerciseResponseDto> create(@Valid @RequestBody CustomExerciseRequestDto request,
                                                             @AuthenticationPrincipal User user){
         return ResponseEntity.ok(customExerciseService.createCustomExercise(request, user));
     }

@@ -4,6 +4,7 @@ import com.faiyaz.project.fittrack.exercise.dto.*;
 import com.faiyaz.project.fittrack.exercise.service.ExerciseService;
 import com.faiyaz.project.fittrack.exercise.service.ExerciseSetService;
 import com.faiyaz.project.fittrack.user.entity.User;
+import jakarta.validation.Valid;
 import org.apache.coyote.Response;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -29,8 +30,8 @@ public class ExerciseController {
     }
 
     @PostMapping
-    public ResponseEntity<List<ExerciseResponseDto>> addExercises(@RequestBody ExerciseRequestDto request,
-                                                                  @AuthenticationPrincipal User user) throws AccessDeniedException {
+    public ResponseEntity<List<ExerciseResponseDto>> addExercises(@Valid @RequestBody ExerciseRequestDto request,
+                                                                  @AuthenticationPrincipal User user) {
         List<ExerciseResponseDto> saved = exerciseService.addExerciseToWorkout(request, user.getId());
         return ResponseEntity.ok(saved);
     }
@@ -38,14 +39,14 @@ public class ExerciseController {
     @PatchMapping("/{id}")
     public ResponseEntity<ExerciseResponseDto> updateExercise(@PathVariable UUID id,
                                                               @RequestBody ExerciseUpdateRequestDto request,
-                                                              @AuthenticationPrincipal User user) throws AccessDeniedException {
+                                                              @AuthenticationPrincipal User user) {
         ExerciseResponseDto updated = exerciseService.updateExercise(id, user.getId(), request);
         return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteExercise(@PathVariable UUID id,
-                                            @AuthenticationPrincipal User user) throws AccessDeniedException {
+                                            @AuthenticationPrincipal User user) {
         exerciseService.deleteExercise(id, user.getId());
         return ResponseEntity.noContent().build();
     }
@@ -66,13 +67,13 @@ public class ExerciseController {
     @PatchMapping("/sets/{setId}")
     public ResponseEntity<ExerciseResponseDto.SetResponse> updateSet(@PathVariable UUID setId,
                                        @AuthenticationPrincipal User user,
-                                       @RequestBody SetUpdateRequestDto request) throws AccessDeniedException {
+                                       @RequestBody SetUpdateRequestDto request) {
         return ResponseEntity.ok(setService.updateSingleSet(setId, user.getId(), request));
     }
 
     @DeleteMapping("/sets/{setId}")
     public ResponseEntity<?> deleteSet(@PathVariable UUID setId,
-                                       @AuthenticationPrincipal User user) throws AccessDeniedException {
+                                       @AuthenticationPrincipal User user) {
         setService.deleteSet(setId, user.getId());
         return  ResponseEntity.noContent().build();
     }

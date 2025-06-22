@@ -4,6 +4,7 @@ import com.faiyaz.project.fittrack.user.dto.UserProfileRequestDto;
 import com.faiyaz.project.fittrack.user.dto.UserProfileResponseDto;
 import com.faiyaz.project.fittrack.user.entity.User;
 import com.faiyaz.project.fittrack.user.repository.UserRepository;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -38,7 +39,7 @@ public class UserController {
 
     @PutMapping("/me")
     public ResponseEntity<?> updateUser(@AuthenticationPrincipal UserDetails userDetails,
-                                        @RequestBody UserProfileRequestDto request){
+                                        @Valid @RequestBody UserProfileRequestDto request){
         User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 

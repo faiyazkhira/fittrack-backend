@@ -7,6 +7,7 @@ import com.faiyaz.project.fittrack.workout.dto.WorkoutResponseDto;
 import com.faiyaz.project.fittrack.workout.dto.WorkoutWithExercisesResponseDto;
 import com.faiyaz.project.fittrack.workout.entity.Workout;
 import com.faiyaz.project.fittrack.workout.service.WorkoutService;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -29,7 +30,7 @@ public class WorkoutController {
     }
 
     @PostMapping
-    public ResponseEntity<WorkoutResponseDto> createWorkout(@RequestBody WorkoutRequestDto request, @AuthenticationPrincipal User user){
+    public ResponseEntity<WorkoutResponseDto> createWorkout(@Valid @RequestBody WorkoutRequestDto request, @AuthenticationPrincipal User user){
 
         Workout session = workoutService.createSession(user.getId(), request.getSessionDate());
 
@@ -48,14 +49,14 @@ public class WorkoutController {
     @PutMapping("/{id}")
     public ResponseEntity<WorkoutResponseDto> updateWorkout(@PathVariable UUID id,
                                                             @AuthenticationPrincipal User user,
-                                                            @RequestBody WorkoutRequestDto request) throws AccessDeniedException {
+                                                            @RequestBody WorkoutRequestDto request) {
         WorkoutResponseDto updated = workoutService.updateWorkout(id, user.getId(), request.getSessionDate());
         return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteWorkout(@PathVariable UUID id,
-                                           @AuthenticationPrincipal User user) throws AccessDeniedException {
+                                           @AuthenticationPrincipal User user) {
         workoutService.deleteWorkout(id, user.getId());
         return ResponseEntity.noContent().build();
     }
