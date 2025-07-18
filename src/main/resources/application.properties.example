@@ -1,8 +1,15 @@
-spring.datasource.url=jdbc:postgresql://localhost:5432/your_db
-spring.datasource.username=your_user
-spring.datasource.password=your_password
+spring.application.name=fittrack
+server.port=8086
+# PostgreSQL Configuration
+spring.datasource.url=jdbc:postgresql://localhost:5433/${POSTGRES_DB}
+spring.datasource.username=${POSTGRES_USER}
+spring.datasource.password=${POSTGRES_PASSWORD}
 spring.datasource.driver-class-name=org.postgresql.Driver
 
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=true
+# Hibernate Config
 spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+spring.jpa.hibernate.ddl-auto=update
+
+# Optional: show SQL in logs
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
