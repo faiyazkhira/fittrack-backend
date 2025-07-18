@@ -47,7 +47,7 @@ public class ExerciseRequestDto {
             private Integer reps;
 
             @NotNull(message = "Weight must be provided")
-            @DecimalMax(value = "0.0", inclusive = true, message = "Weight must be equal to or greater than 0")
+            @DecimalMin(value = "0.0", inclusive = true, message = "Weight must be equal to or greater than 0")
             private Double weight;
 
             @Size(max = 255, message = "Notes must be at most 255 characters")
