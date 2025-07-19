@@ -17,8 +17,6 @@ import java.util.UUID;
 @NoArgsConstructor
 public class ExerciseRequestDto {
 
-    @NotNull(message = "Workout ID must be provided")
-    private UUID workoutId;
 
     @Valid
     @NotEmpty(message = "Exercises list cannot be empty")
