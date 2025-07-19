@@ -45,9 +45,9 @@ public class ExerciseService {
     }
 
     @Transactional
-    public List<ExerciseResponseDto> addExerciseToWorkout(ExerciseRequestDto request, UUID userId) {
-        Workout workout = workoutRepository.findById(request.getWorkoutId())
-                .orElseThrow(() -> new WorkoutNotFoundException("Workout not found for id: " + request.getWorkoutId()));
+    public List<ExerciseResponseDto> persistExercises(UUID workoutId, ExerciseRequestDto request, UUID userId) {
+        Workout workout = workoutRepository.findById(workoutId)
+                .orElseThrow(() -> new WorkoutNotFoundException("Workout not found for id: " + workoutId));
 
         if(!workout.getUser().getId().equals(userId)){
             throw new AccessDeniedException("You do not have permission to add exercises to this workout");

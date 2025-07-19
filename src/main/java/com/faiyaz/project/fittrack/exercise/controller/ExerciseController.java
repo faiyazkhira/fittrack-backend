@@ -29,12 +29,6 @@ public class ExerciseController {
         this.setService = setService;
     }
 
-    @PostMapping
-    public ResponseEntity<List<ExerciseResponseDto>> addExercises(@Valid @RequestBody ExerciseRequestDto request,
-                                                                  @AuthenticationPrincipal User user) {
-        List<ExerciseResponseDto> saved = exerciseService.addExerciseToWorkout(request, user.getId());
-        return ResponseEntity.ok(saved);
-    }
 
     @PatchMapping("/{id}")
     public ResponseEntity<ExerciseResponseDto> updateExercise(@PathVariable UUID id,
@@ -64,17 +58,5 @@ public class ExerciseController {
         return ResponseEntity.ok(response);
     }
 
-    @PatchMapping("/sets/{setId}")
-    public ResponseEntity<ExerciseResponseDto.SetResponse> updateSet(@PathVariable UUID setId,
-                                       @AuthenticationPrincipal User user,
-                                       @RequestBody SetUpdateRequestDto request) {
-        return ResponseEntity.ok(setService.updateSingleSet(setId, user.getId(), request));
-    }
 
-    @DeleteMapping("/sets/{setId}")
-    public ResponseEntity<?> deleteSet(@PathVariable UUID setId,
-                                       @AuthenticationPrincipal User user) {
-        setService.deleteSet(setId, user.getId());
-        return  ResponseEntity.noContent().build();
-    }
 }
