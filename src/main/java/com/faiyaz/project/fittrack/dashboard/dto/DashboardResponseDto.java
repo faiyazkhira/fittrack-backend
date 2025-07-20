@@ -16,7 +16,7 @@ public class DashboardResponseDto {
     private int totalWorkouts;
     private double currentWeight;
     private LastWorkoutDto lastWorkout;
-    private List<CalenderHeatmapDto> calenderHeatmap;
+    private List<CalendarHeatmapDto> calendarHeatmap;
 
     @Getter
     @Setter
@@ -43,7 +43,7 @@ public class DashboardResponseDto {
     @AllArgsConstructor
     @NoArgsConstructor
     @Builder
-    public static class CalenderHeatmapDto {
+    public static class CalendarHeatmapDto {
         private LocalDate date;
         private int count;
     }
