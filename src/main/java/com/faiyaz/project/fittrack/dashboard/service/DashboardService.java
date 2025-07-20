@@ -59,8 +59,8 @@ public class DashboardService {
         }
 
         List<Object[]> heatmapData = workoutRepository.getWorkoutCountGroupedByDate(userId);
-        List<DashboardResponseDto.CalenderHeatmapDto> heatmap = heatmapData.stream()
-                .map(obj -> DashboardResponseDto.CalenderHeatmapDto.builder()
+        List<DashboardResponseDto.CalendarHeatmapDto> heatmap = heatmapData.stream()
+                .map(obj -> DashboardResponseDto.CalendarHeatmapDto.builder()
                         .date((LocalDate) obj[0])
                         .count(((Long) obj[1]).intValue())
                         .build())
@@ -76,7 +76,7 @@ public class DashboardService {
                         .muscleGroup(muscleGroupDisplay)
                         .exercises(exerciseSummaryList)
                         .build() : null)
-                .calenderHeatmap(heatmap)
+                .calendarHeatmap(heatmap)
                 .build();
     }
 }
