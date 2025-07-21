@@ -1,7 +1,9 @@
 package com.faiyaz.project.fittrack.auth.service;
 
 import com.faiyaz.project.fittrack.auth.entity.PasswordResetToken;
+import com.faiyaz.project.fittrack.auth.entity.SecureAccountToken;
 import com.faiyaz.project.fittrack.auth.repository.PasswordResetTokenRepository;
+import com.faiyaz.project.fittrack.auth.repository.SecureAccountTokenRepository;
 import com.faiyaz.project.fittrack.email.EmailService;
 import com.faiyaz.project.fittrack.user.entity.AuthProvider;
 import com.faiyaz.project.fittrack.user.entity.User;
@@ -20,15 +22,17 @@ public class ForgotPasswordService {
     private final PasswordResetTokenRepository tokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final SecureAccountTokenRepository secureAccountRepository;
 
     @Value("${app.frontend-url}")
     private String frontendUrl;
 
-    public ForgotPasswordService(UserRepository userRepository, PasswordResetTokenRepository tokenRepository, PasswordEncoder passwordEncoder, EmailService emailService) {
+    public ForgotPasswordService(UserRepository userRepository, PasswordResetTokenRepository tokenRepository, PasswordEncoder passwordEncoder, EmailService emailService, SecureAccountTokenRepository secureAccountRepository) {
         this.userRepository = userRepository;
         this.tokenRepository = tokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
+        this.secureAccountRepository = secureAccountRepository;
     }
 
     public void processForgotPassword(String email){
@@ -76,7 +80,7 @@ public class ForgotPasswordService {
                     .build();
             tokenRepository.save(newResetToken);
 
-            String url = frontendUrl + "/reset-password?token=" + newToken;
+            String resetPasswordUrl = frontendUrl + "/reset-password?token=" + newToken;
             String body = String.format(
                     "Hello %s,\n\n" +
                             "Your previous password reset link expired. We've generated a new one for you:\n\n" +
@@ -84,7 +88,7 @@ public class ForgotPasswordService {
                             "This link will expire in 15 minutes.\n\n" +
                             "Best regards,\n" +
                             "Repwise Team",
-                    user.getName(), url
+                    user.getName(), resetPasswordUrl
             );
             emailService.sendEmail(user.getEmail(), "New Password Reset Link", body);
 
@@ -93,18 +97,30 @@ public class ForgotPasswordService {
 
         User user = resetToken.getUser();
         user.setPassword(passwordEncoder.encode(newPassword));
+        user.setAccountLocked(false);
         userRepository.save(user);
         tokenRepository.delete(resetToken);
 
+        String secureToken = UUID.randomUUID().toString();
+        SecureAccountToken secureAccountToken = SecureAccountToken.builder()
+                .token(secureToken)
+                .user(user)
+                .expiryDate(LocalDateTime.now().plusHours(1))
+                .build();
+        secureAccountRepository.save(secureAccountToken);
+
+        String secureAccountUrl = frontendUrl + "/secure-account?token=" + secureToken;
+
         String body = String.format(
                 "Hello %s,\n\n" +
-                        "Your password has been successfully reset. If you didn't perform this action, please contact our support team immediately.\n\n" +
+                        "Your password has been successfully reset. If this wasn't you, please secure your account immediately:\n\n%s\n\nThis will lock your account and require a new password reset.\n\n" +
                         "Best regards,\n" +
                         "Repwise Team",
-                user.getName()
+                user.getName(), secureAccountUrl
         );
+
         emailService.sendEmail(user.getEmail(), "Your Password Has Been Reset", body);
 
-        return "Password reset successful.";
+        return "Password reset successful. Secure account link has been shared via email";
     }
 }

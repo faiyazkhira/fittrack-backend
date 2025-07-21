@@ -8,6 +8,7 @@ import com.faiyaz.project.fittrack.user.entity.Role;
 import com.faiyaz.project.fittrack.user.entity.User;
 import com.faiyaz.project.fittrack.user.repository.UserRepository;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -40,6 +41,11 @@ public class AuthService {
     public AuthResponse login(LoginRequest request){
         UserDetails user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UsernameNotFoundException("User Not Found"));
+
+        if(!user.isAccountNonLocked()){
+            throw new LockedException("Account is locked. Please reset your password to unlock.");
+        }
+
         if(!passwordEncoder.matches(request.getPassword(), user.getPassword())){
             throw new BadCredentialsException("Invalid Password");
         }
