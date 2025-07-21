@@ -45,6 +45,9 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     private AuthProvider authProvider = AuthProvider.LOCAL;
 
+    @Column(name = "account_locked", nullable = false)
+    private boolean accountLocked = false;
+
     private boolean enabled = true;
 
     @CreationTimestamp
@@ -72,7 +75,7 @@ public class User implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return UserDetails.super.isAccountNonLocked();
+        return !this.accountLocked;
     }
 
     @Override
