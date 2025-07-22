@@ -20,25 +20,25 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService, RefreshTokenService refreshTokenService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.refreshTokenService = refreshTokenService;
     }
 
-    public AuthResponse register(SignUpRequest request){
+    public User register(SignUpRequest request){
         User user = new User();
         user.setName(request.getName());
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(Role.USER);
-        userRepository.save(user);
-        String jwt = jwtService.generateToken(user);
-        return new AuthResponse(jwt);
+        return userRepository.save(user);
     }
 
-    public AuthResponse login(LoginRequest request){
+    public User login(LoginRequest request){
         UserDetails user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UsernameNotFoundException("User Not Found"));
 
@@ -49,7 +49,7 @@ public class AuthService {
         if(!passwordEncoder.matches(request.getPassword(), user.getPassword())){
             throw new BadCredentialsException("Invalid Password");
         }
-        String jwt = jwtService.generateToken(user);
-        return new AuthResponse(jwt);
+
+        return (User) user;
     }
 }

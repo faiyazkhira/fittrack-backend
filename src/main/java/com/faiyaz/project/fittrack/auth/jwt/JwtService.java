@@ -17,17 +17,14 @@ import java.util.Date;
 @Service
 public class JwtService implements EnvironmentAware {
 
-
-
     private static String SECRET;
-    private static final long EXPIRATION = 1000 * 60 * 60;
 
-    public String generateToken(UserDetails userDetails) {
+    public String generateToken(UserDetails userDetails, long expiryMillis) {
         return Jwts.builder()
                 .setSubject(userDetails.getUsername())
                 .claim("authorities", userDetails.getAuthorities())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION))
+                .setExpiration(new Date(System.currentTimeMillis() + expiryMillis))
                 .signWith(getSignKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -36,10 +33,6 @@ public class JwtService implements EnvironmentAware {
         return Jwts.parserBuilder().setSigningKey(getSignKey()).build()
                 .parseClaimsJws(token)
                 .getBody().getSubject();
-    }
-
-    public boolean isTokenValid(String token, UserDetails userDetails){
-        return extractUsername(token).equals(userDetails.getUsername());
     }
 
     private Key getSignKey() {
