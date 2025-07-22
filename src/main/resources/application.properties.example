@@ -25,3 +25,6 @@ spring.mail.password=${SPRING_MAIL_PASSWORD}
 spring.mail.properties.mail.smtp.auth=true
 spring.mail.properties.mail.smtp.starttls.enable=true
 app.mail.sender-name=${APP_MAIL_SENDER_NAME}
+
+# JWT ACCESS TOKEN EXPIRY
+app.refresh-token.expiry-days=

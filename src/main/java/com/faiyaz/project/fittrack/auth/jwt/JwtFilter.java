@@ -1,5 +1,7 @@
 package com.faiyaz.project.fittrack.auth.jwt;
 
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -50,21 +52,27 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
         jwt = authHeader.substring(7);
-        username = jwtService.extractUsername(jwt);
-        logger.info("JWT found, extracted username: {}", username);
 
-        if(username != null && SecurityContextHolder.getContext().getAuthentication() == null){
-            var userDetails = userDetailsService.loadUserByUsername(username);
-            if(jwtService.isTokenValid(jwt, userDetails)){
+        try {
+            username = jwtService.extractUsername(jwt);
+            logger.info("JWT found, extracted username: {}", username);
+
+            if(username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                var userDetails = userDetailsService.loadUserByUsername(username);
                 var authToken = new UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.getAuthorities()
                 );
                 SecurityContextHolder.getContext().setAuthentication(authToken);
                 logger.info("JWT is valid, user authenticated: {}", username);
-            } else {
-                logger.warn("JWT is invalid for user: {}", username);
             }
+        } catch (ExpiredJwtException e) {
+            logger.warn("Expired JWT token: {}", e.getMessage());
+        } catch (JwtException e) {
+            logger.warn("Invalid JWT token: {}", e.getMessage());
+        } catch (Exception e) {
+            logger.error("Unexpected error in JWT filter: {}", e.getMessage());
         }
+
         filterChain.doFilter(request, response);
     }
 }
