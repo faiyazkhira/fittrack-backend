@@ -1,11 +1,16 @@
 package com.faiyaz.project.fittrack.exception;
 
+import lombok.Getter;
+import org.springframework.http.HttpStatus;
+
+@Getter
 public class FitTrackException extends RuntimeException {
-    public FitTrackException(String message) {
+    private final HttpStatus status;
+
+    public FitTrackException(String message, HttpStatus status) {
         super(message);
+        this.status = status;
     }
 
-    public FitTrackException(String message, Throwable cause){
-        super(message, cause);
-    }
+
 }
