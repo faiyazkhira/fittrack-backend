@@ -1,7 +1,6 @@
 package com.faiyaz.project.fittrack.auth.service;
 
 import com.faiyaz.project.fittrack.auth.jwt.JwtService;
-import com.faiyaz.project.fittrack.user.dto.AuthResponse;
 import com.faiyaz.project.fittrack.user.dto.LoginRequest;
 import com.faiyaz.project.fittrack.user.dto.SignUpRequest;
 import com.faiyaz.project.fittrack.user.entity.Role;
@@ -39,7 +38,7 @@ public class AuthService {
     }
 
     public User login(LoginRequest request){
-        UserDetails user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UsernameNotFoundException("User Not Found"));
 
         if(!user.isAccountNonLocked()){
@@ -50,6 +49,6 @@ public class AuthService {
             throw new BadCredentialsException("Invalid Password");
         }
 
-        return (User) user;
+        return user;
     }
 }

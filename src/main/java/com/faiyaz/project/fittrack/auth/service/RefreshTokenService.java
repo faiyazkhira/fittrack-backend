@@ -24,6 +24,7 @@ public class RefreshTokenService {
         this.refreshTokenRepository = refreshTokenRepository;
     }
 
+    @Transactional
     public RefreshToken createRefreshToken(User user){
         refreshTokenRepository.deleteByUser(user);
 

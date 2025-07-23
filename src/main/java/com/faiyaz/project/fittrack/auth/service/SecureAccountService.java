@@ -20,15 +20,17 @@ public class SecureAccountService {
     private final SecureAccountTokenRepository secureTokenRepository;
     private final EmailService emailService;
     private final PasswordResetTokenRepository resetTokenRepository;
+    private final RefreshTokenService refreshTokenService;
 
     @Value("${app.frontend-url}")
     private String frontendUrl;
 
-    public SecureAccountService(UserRepository userRepository, SecureAccountTokenRepository secureTokenRepository, EmailService emailService, PasswordResetTokenRepository resetTokenRepository) {
+    public SecureAccountService(UserRepository userRepository, SecureAccountTokenRepository secureTokenRepository, EmailService emailService, PasswordResetTokenRepository resetTokenRepository, RefreshTokenService refreshTokenService) {
         this.userRepository = userRepository;
         this.secureTokenRepository = secureTokenRepository;
         this.emailService = emailService;
         this.resetTokenRepository = resetTokenRepository;
+        this.refreshTokenService = refreshTokenService;
     }
 
 
@@ -44,6 +46,9 @@ public class SecureAccountService {
         user.setAccountLocked(true);
         userRepository.save(user);
         secureTokenRepository.delete(secureToken);
+
+        //Revoke refresh tokens
+        refreshTokenService.revokeUserTokens(user);
 
         //Force reset flow: send reset email
         String resetToken = UUID.randomUUID().toString();

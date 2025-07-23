@@ -1,5 +1,7 @@
 package com.faiyaz.project.fittrack.exception;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -13,6 +15,8 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<?> handleMethodArgumentNotValid(MethodArgumentNotValidException ex){
@@ -68,7 +72,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> handleOtherExceptions(Exception ex){
-        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error occurred");
+        logger.error("Unhandled exception caught: ", ex);
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error occurred: " + ex.getMessage());
     }
 
     private ResponseEntity<Map<String, Object>> buildResponse(HttpStatus status, String message){
